@@ -1,7 +1,8 @@
 package ru.ifmo.se.web.controller;
 
-import io.smallrye.mutiny.Uni;
+import ru.ifmo.se.configuration.UserRolesConstants;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -14,6 +15,7 @@ import java.net.URISyntaxException;
 @Produces(MediaType.APPLICATION_OCTET_STREAM)
 public class FilesController {
     @GET
+    @RolesAllowed(UserRolesConstants.USER)
     public Response downloadFile() throws URISyntaxException {
         File nf = new File(getClass().getClassLoader().getResource("123.jpg").toURI());
         Response.ResponseBuilder response = Response.ok((Object) nf);

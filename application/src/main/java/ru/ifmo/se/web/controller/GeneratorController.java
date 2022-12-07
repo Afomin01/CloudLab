@@ -1,19 +1,15 @@
 package ru.ifmo.se.web.controller;
 
-import io.quarkus.runtime.graal.AwtImageIO;
 import ru.ifmo.se.service.api.GenerationService;
-import ru.ifmo.se.web.model.GenerationParametersRequestDto;
+import ru.ifmo.se.web.model.GenerationTaskParameters1DRequestDto;
+import ru.ifmo.se.web.model.GenerationTaskParameters2DRequestDto;
 
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 
 @Path("/generator")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -23,21 +19,52 @@ public class GeneratorController {
     @Inject
     GenerationService generationService;
 
-    @POST
+    @Context
+    SecurityContext securityContext;
+
+    @POST()
+    @Path("/1D/testImage")
     @Produces("image/png")
-    public Response createGenerationTask(GenerationParametersRequestDto requestDto) throws IOException {
-        BufferedImage bufferedImage = generationService.createGenerationTask(requestDto);
+    public Response createTestImage1D(GenerationTaskParameters1DRequestDto requestDto) throws IOException {
+        BufferedImage bufferedImage = generationService.createTestImage1D(requestDto);
 
-/*        File file = new File("tmp.png");
-        ImageIO.write(bufferedImage, "png", file);
-
-        Response.ResponseBuilder response = Response.ok(file);
-        response.header("Content-Disposition", "attachment;filename=" + "test.png");*/
         return Response.ok().entity((StreamingOutput) output -> {
                     ImageIO.write(bufferedImage, "png", output);
                     output.flush();
                 })
                 .header("Content-Disposition", "attachment;filename=" + "test.png")
                 .build();
+    }
+
+    @POST()
+    @Path("/1D/generate")
+    @Produces("image/png")
+    public Response generateDataset2D(GenerationTaskParameters1DRequestDto requestDto) throws IOException {
+        generationService.createGenerationTask1D(requestDto, securityContext.getUserPrincipal().getName());
+
+        return Response.noContent().build();
+    }
+
+    @POST()
+    @Path("/2D/testImage")
+    @Produces("image/png")
+    public Response createTestImage2D(GenerationTaskParameters2DRequestDto requestDto) throws IOException {
+        BufferedImage bufferedImage = generationService.createTestImage2D(requestDto);
+
+        return Response.ok().entity((StreamingOutput) output -> {
+                    ImageIO.write(bufferedImage, "png", output);
+                    output.flush();
+                })
+                .header("Content-Disposition", "attachment;filename=" + "test.png")
+                .build();
+    }
+
+    @POST()
+    @Path("/2D/generate")
+    @Produces("image/png")
+    public Response generateDataset2D(GenerationTaskParameters2DRequestDto requestDto) throws IOException {
+        generationService.createGenerationTask2D(requestDto, securityContext.getUserPrincipal().getName());
+
+        return Response.noContent().build();
     }
 }

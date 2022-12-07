@@ -30,7 +30,7 @@ public class GenerationTaskEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private UserEntity userId;
+    private UserEntity user;
 
     @Column(name = "creation_time")
     private Instant creationTime;

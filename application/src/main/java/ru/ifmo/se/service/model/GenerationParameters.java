@@ -12,7 +12,13 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GenerationParameters {
-    private String equation;
+    private String equationX;
+    private String equationY;
+
+    private String xVarName;
+    private String yVarName;
+
+    private int count;
 
     private int height;
     private int width;
@@ -21,9 +27,14 @@ public class GenerationParameters {
     private double xMax;
     private double xStep;
 
+    private double yMin;
+    private double yMax;
+    private double yStep;
+
     private double drawScale;
 
-    private Map<String, ParameterSettings> parameters;
+    private Map<String, ParameterSettings> parametersX;
+    private Map<String, ParameterSettings> parametersY;
 
     @Data
     @NoArgsConstructor

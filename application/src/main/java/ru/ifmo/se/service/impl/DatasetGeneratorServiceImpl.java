@@ -13,9 +13,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,8 +27,7 @@ public class DatasetGeneratorServiceImpl implements DatasetGeneratorService {
     public void precessTask(UUID generationTaskUuid) {
     }
 
-    @Override
-    public BufferedImage createSingleImage(GenerationParameters generationParameters) {
+    public BufferedImage createSingle1DImage(GenerationParameters generationParameters) {
         BufferedImage image = new BufferedImage(generationParameters.getWidth(), generationParameters.getHeight(), BufferedImage.TYPE_INT_RGB);
         Graphics2D g = image.createGraphics();
         g.setPaint(Color.WHITE);
@@ -40,8 +37,8 @@ public class DatasetGeneratorServiceImpl implements DatasetGeneratorService {
         int halfWidth = image.getWidth() / 2;
         int halfHeight = image.getHeight() / 2;
 
-        List<Argument> arguments = generationParameters
-                .getParameters()
+        List<Argument> argumentsX = generationParameters
+                .getParametersX()
                 .entrySet()
                 .stream()
                 .map(entry -> new Argument(
@@ -52,20 +49,19 @@ public class DatasetGeneratorServiceImpl implements DatasetGeneratorService {
                         )
                 )).collect(Collectors.toList());
 
-        arguments.add(new Argument("x", 0));
-
-        Expression expression = new Expression(generationParameters.getEquation(), arguments.toArray(new Argument[0]));
-        expression.setArgumentValue("x", generationParameters.getXMin());
+        argumentsX.add(new Argument(generationParameters.getXVarName(), generationParameters.getXMin()));
+        Expression expressionX = new Expression(generationParameters.getEquationX(), argumentsX.toArray(new Argument[0]));
 
         int xLast = (int) (generationParameters.getXMin() * generationParameters.getDrawScale()) + halfHeight;
-        int yLast = (int) (expression.calculate() * generationParameters.getDrawScale()) + halfWidth;
+        int yLast = (int) (expressionX.calculate() * generationParameters.getDrawScale()) + halfWidth;
 
         int xCurrent, yCurrent;
 
         for (double x = generationParameters.getXMin() + generationParameters.getXStep(); x <= generationParameters.getXMax(); x += generationParameters.getXStep()) {
-            expression.setArgumentValue("x", x);
+            expressionX.setArgumentValue(generationParameters.getXVarName(), x);
+
             xCurrent = (int) (x * generationParameters.getDrawScale()) + halfHeight;
-            yCurrent = (int) (expression.calculate() * generationParameters.getDrawScale()) + halfWidth;
+            yCurrent = (int) (expressionX.calculate() * generationParameters.getDrawScale()) + halfWidth;
             g.drawLine(xLast, yLast, xCurrent, yCurrent);
             xLast = xCurrent;
             yLast = yCurrent;
@@ -73,16 +69,67 @@ public class DatasetGeneratorServiceImpl implements DatasetGeneratorService {
 
         g.dispose();
 
-        File file = new File("E://test.png");
-
-        try {
-            ImageIO.write(image, "png", file);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
         return image;
     }
 
+    public BufferedImage createSingle2DImage(GenerationParameters generationParameters) {
+        BufferedImage image = new BufferedImage(generationParameters.getWidth(), generationParameters.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+        g.setPaint(Color.WHITE);
+        g.fillRect(0, 0, image.getWidth(), image.getHeight());
+        g.setColor(Color.BLACK);
 
+        int halfWidth = image.getWidth() / 2;
+        int halfHeight = image.getHeight() / 2;
+
+        List<Argument> argumentsX = generationParameters
+                .getParametersX()
+                .entrySet()
+                .stream()
+                .map(entry -> new Argument(
+                        entry.getKey(),
+                        mathUtils.getRandomDouble(
+                                entry.getValue().getMin(),
+                                entry.getValue().getMax()
+                        )
+                )).collect(Collectors.toList());
+
+        argumentsX.add(new Argument(generationParameters.getXVarName(), generationParameters.getXMin()));
+        Expression expressionX = new Expression(generationParameters.getEquationX(), argumentsX.toArray(new Argument[0]));
+
+        List<Argument> argumentsY = generationParameters
+                .getParametersY()
+                .entrySet()
+                .stream()
+                .map(entry -> new Argument(
+                        entry.getKey(),
+                        mathUtils.getRandomDouble(
+                                entry.getValue().getMin(),
+                                entry.getValue().getMax()
+                        )
+                )).collect(Collectors.toList());
+
+        argumentsY.add(new Argument(generationParameters.getYVarName(), generationParameters.getYMin()));
+        Expression expressionY = new Expression(generationParameters.getEquationY(), argumentsY.toArray(new Argument[0]));
+
+        int xLast = (int) (expressionX.calculate() * generationParameters.getDrawScale()) + halfHeight;
+        int yLast = (int) (expressionY.calculate() * generationParameters.getDrawScale()) + halfWidth;
+
+        int xCurrent, yCurrent;
+
+        for (double t = generationParameters.getXMin() + generationParameters.getXStep(); t <= generationParameters.getXMax(); t += generationParameters.getXStep()) {
+            expressionX.setArgumentValue(generationParameters.getXVarName(), t);
+            expressionY.setArgumentValue(generationParameters.getYVarName(), t);
+
+            xCurrent = (int) (expressionY.calculate() * generationParameters.getDrawScale()) + halfHeight;
+            yCurrent = (int) (expressionX.calculate() * generationParameters.getDrawScale()) + halfWidth;
+            g.drawLine(xLast, yLast, xCurrent, yCurrent);
+            xLast = xCurrent;
+            yLast = yCurrent;
+        }
+
+        g.dispose();
+
+        return image;
+    }
 }

@@ -4,5 +4,6 @@ public enum GenerationStatus {
     CREATED,
     PRECESSING,
     COMPLETED,
-    ERROR;
+    ERROR,
+    RESULT_DELETED;
 }

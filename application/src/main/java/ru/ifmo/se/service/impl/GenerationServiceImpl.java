@@ -18,6 +18,7 @@ import ru.ifmo.se.service.api.GenerationService;
 import ru.ifmo.se.service.model.GenerationParameters;
 import ru.ifmo.se.web.model.GenerationTaskParameters1DRequestDto;
 import ru.ifmo.se.web.model.GenerationTaskParameters2DRequestDto;
+import ru.ifmo.se.web.model.GenerationTaskResponseDto;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -104,6 +105,22 @@ public class GenerationServiceImpl implements GenerationService {
         validateParametersInput(requestDto);
 
         return datasetGeneratorService.createSingle2DImage(generationParametersMapper.from(requestDto));
+    }
+
+    @Override
+    public List<GenerationTaskResponseDto> getUserGenerationTasks(String username) {
+        UserEntity user = userRepository.findByName(username);
+
+        return generationTaskRepository.findByUser(user)
+                .stream()
+                .map(task ->
+                        GenerationTaskResponseDto
+                                .builder()
+                                .id(task.getId())
+                                .creationTime(task.getCreationTime())
+                                .status(task.getStatus())
+                                .build()
+                ).collect(Collectors.toList());
     }
 
     private void validateParametersInput(GenerationTaskParameters1DRequestDto requestDto) throws InputValidationException {

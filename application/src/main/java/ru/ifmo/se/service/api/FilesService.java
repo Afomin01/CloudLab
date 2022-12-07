@@ -1,5 +1,8 @@
 package ru.ifmo.se.service.api;
 
-public interface FilesService {
+import java.io.InputStream;
+import java.util.UUID;
 
+public interface FilesService {
+    InputStream getDatasetStream(String username, UUID taskUuid);
 }

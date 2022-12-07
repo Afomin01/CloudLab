@@ -7,6 +7,12 @@ public interface ApplicationProperties {
 
     SmbProperties smb();
 
+    ScheduledProperties scheduled();
+
+    interface ScheduledProperties {
+        String datasetGenerationTaskStart();
+    }
+
     interface SmbProperties{
         String serverUrl();
         String username();

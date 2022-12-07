@@ -129,7 +129,7 @@ public class DatasetGeneratorServiceImpl implements DatasetGeneratorService {
 
                 DiskShare diskShare = diskShareWrapper.getDiskShare();
                 File datasetZip = diskShare.openFile(
-                        userId.toString() + generationTaskUuid + ".zip",
+                        userId.toString() + "/" + generationTaskUuid + ".zip",
                         EnumSet.of(AccessMask.FILE_WRITE_DATA),
                         null,
                         SMB2ShareAccess.ALL,

@@ -2,6 +2,7 @@ package ru.ifmo.se.web.controller;
 
 import ru.ifmo.se.configuration.UserRolesConstants;
 import ru.ifmo.se.service.api.GenerationService;
+import ru.ifmo.se.web.model.CreatedGenerationTaskResponseDto;
 import ru.ifmo.se.web.model.GenerationTaskParameters1DRequestDto;
 import ru.ifmo.se.web.model.GenerationTaskParameters2DRequestDto;
 import ru.ifmo.se.web.model.GenerationTaskResponseDto;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Path("/generator")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -43,19 +45,20 @@ public class GeneratorController {
 
     @POST()
     @Path("/1D/generate")
-    @Produces("image/png")
     @RolesAllowed(UserRolesConstants.USER)
-    public Response generateDataset2D(GenerationTaskParameters1DRequestDto requestDto) throws IOException {
-        generationService.createGenerationTask1D(requestDto, securityContext.getUserPrincipal().getName());
+    public Response generateDataset2D(GenerationTaskParameters1DRequestDto requestDto) {
+        UUID taskId = generationService.createGenerationTask1D(requestDto, securityContext.getUserPrincipal().getName());
 
-        return Response.noContent().build();
+        return Response
+                .ok(CreatedGenerationTaskResponseDto.builder().taskId(taskId).build())
+                .build();
     }
 
     @POST()
     @Path("/2D/testImage")
     @Produces("image/png")
     @RolesAllowed(UserRolesConstants.USER)
-    public Response createTestImage2D(GenerationTaskParameters2DRequestDto requestDto) throws IOException {
+    public Response createTestImage2D(GenerationTaskParameters2DRequestDto requestDto) {
         BufferedImage bufferedImage = generationService.createTestImage2D(requestDto);
 
         return Response.ok().entity((StreamingOutput) output -> {
@@ -68,12 +71,13 @@ public class GeneratorController {
 
     @POST()
     @Path("/2D/generate")
-    @Produces("image/png")
     @RolesAllowed(UserRolesConstants.USER)
     public Response generateDataset2D(GenerationTaskParameters2DRequestDto requestDto) throws IOException {
-        generationService.createGenerationTask2D(requestDto, securityContext.getUserPrincipal().getName());
+        UUID taskId =  generationService.createGenerationTask2D(requestDto, securityContext.getUserPrincipal().getName());
 
-        return Response.noContent().build();
+        return Response
+                .ok(CreatedGenerationTaskResponseDto.builder().taskId(taskId).build())
+                .build();
     }
 
     @GET

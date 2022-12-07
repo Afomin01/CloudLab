@@ -26,6 +26,7 @@ import javax.transaction.Transactional;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,7 +50,7 @@ public class GenerationServiceImpl implements GenerationService {
 
     @Override
     @Transactional
-    public void createGenerationTask1D(GenerationTaskParameters1DRequestDto requestDto, String username) {
+    public UUID createGenerationTask1D(GenerationTaskParameters1DRequestDto requestDto, String username) {
         validateParametersInput(requestDto);
 
         GenerationParameters generationParameters = generationParametersMapper.from(requestDto);
@@ -64,6 +65,7 @@ public class GenerationServiceImpl implements GenerationService {
             generationTaskEntity.setUser(userEntity);
 
             generationTaskRepository.persist(generationTaskEntity);
+            return generationTaskEntity.getId();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("Unexpected error.");
@@ -79,7 +81,7 @@ public class GenerationServiceImpl implements GenerationService {
 
     @Override
     @Transactional
-    public void createGenerationTask2D(GenerationTaskParameters2DRequestDto requestDto, String username) {
+    public UUID createGenerationTask2D(GenerationTaskParameters2DRequestDto requestDto, String username) {
         validateParametersInput(requestDto);
 
         GenerationParameters generationParameters = generationParametersMapper.from(requestDto);
@@ -88,12 +90,14 @@ public class GenerationServiceImpl implements GenerationService {
 
         try {
             GenerationTaskEntity generationTaskEntity = new GenerationTaskEntity();
+            generationTaskEntity.setId(UUID.randomUUID());
             generationTaskEntity.setCreationTime(Instant.now());
             generationTaskEntity.setParameters(objectMapper.writeValueAsString(generationParameters));
             generationTaskEntity.setStatus(GenerationStatus.CREATED);
             generationTaskEntity.setUser(userEntity);
 
             generationTaskRepository.persist(generationTaskEntity);
+            return generationTaskEntity.getId();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             throw new RuntimeException("Unexpected error.");

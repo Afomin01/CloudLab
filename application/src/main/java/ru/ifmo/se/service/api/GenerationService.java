@@ -6,12 +6,13 @@ import ru.ifmo.se.web.model.GenerationTaskResponseDto;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.UUID;
 
 public interface GenerationService {
-    void createGenerationTask1D(GenerationTaskParameters1DRequestDto requestDto, String username);
+    UUID createGenerationTask1D(GenerationTaskParameters1DRequestDto requestDto, String username);
 
     BufferedImage createTestImage1D(GenerationTaskParameters1DRequestDto requestDto);
-    void createGenerationTask2D(GenerationTaskParameters2DRequestDto requestDto, String username);
+    UUID createGenerationTask2D(GenerationTaskParameters2DRequestDto requestDto, String username);
 
     BufferedImage createTestImage2D(GenerationTaskParameters2DRequestDto requestDto);
 

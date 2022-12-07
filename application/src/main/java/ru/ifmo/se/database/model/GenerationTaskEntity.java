@@ -25,7 +25,6 @@ import java.util.UUID;
 @Table(name = "generation_task")
 public class GenerationTaskEntity {
     @Id
-    @GeneratedValue
     private UUID id;
 
     @ManyToOne

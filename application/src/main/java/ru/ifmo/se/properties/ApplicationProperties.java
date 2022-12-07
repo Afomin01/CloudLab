@@ -9,6 +9,12 @@ public interface ApplicationProperties {
 
     ScheduledProperties scheduled();
 
+    UserProperties user();
+
+    interface UserProperties {
+        int defaultQuota();
+    }
+
     interface ScheduledProperties {
         String datasetGenerationTaskStart();
     }

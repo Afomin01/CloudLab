@@ -11,6 +11,14 @@ public interface ApplicationProperties {
 
     UserProperties user();
 
+    BotProperties bot();
+
+    interface BotProperties {
+        String appId();
+
+        String password();
+    }
+
     interface UserProperties {
         int defaultQuota();
     }

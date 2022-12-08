@@ -1,11 +1,14 @@
 package ru.ifmo.se.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hierynomus.smbj.share.DiskShare;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.mariuszgromada.math.mxparser.Argument;
 import org.mariuszgromada.math.mxparser.Expression;
+import ru.ifmo.se.configuration.UserRolesConstants;
+import ru.ifmo.se.configuration.model.DiskShareWrapper;
 import ru.ifmo.se.database.model.GenerationStatus;
 import ru.ifmo.se.database.model.GenerationTaskEntity;
 import ru.ifmo.se.database.model.UserEntity;
@@ -14,11 +17,14 @@ import ru.ifmo.se.database.repository.UserRepository;
 import ru.ifmo.se.exception.InputValidationException;
 import ru.ifmo.se.mapper.GenerationParametersMapper;
 import ru.ifmo.se.service.api.DatasetGeneratorService;
+import ru.ifmo.se.service.api.FilesService;
 import ru.ifmo.se.service.api.GenerationService;
 import ru.ifmo.se.service.model.GenerationParameters;
+import ru.ifmo.se.utils.FileUtils;
 import ru.ifmo.se.web.model.GenerationTaskParameters1DRequestDto;
 import ru.ifmo.se.web.model.GenerationTaskParameters2DRequestDto;
 import ru.ifmo.se.web.model.GenerationTaskResponseDto;
+import ru.ifmo.se.web.model.admin.DeleteTaskResultRequestDto;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -26,6 +32,7 @@ import javax.transaction.Transactional;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -48,6 +55,9 @@ public class GenerationServiceImpl implements GenerationService {
     @Inject
     UserRepository userRepository;
 
+    @Inject
+    FilesService filesService;
+
     @Override
     @Transactional
     public UUID createGenerationTask1D(GenerationTaskParameters1DRequestDto requestDto, String username) {
@@ -56,6 +66,9 @@ public class GenerationServiceImpl implements GenerationService {
         GenerationParameters generationParameters = generationParametersMapper.from(requestDto);
 
         UserEntity userEntity = userRepository.findByName(username);
+        if (userEntity.getQuota() - requestDto.getDatasetSize() < 0) {
+            throw new InputValidationException("Generation quota reached. Contact administrator to increase it or lower requested dataset size. You current quota is: " + userEntity.getQuota());
+        }
 
         try {
             GenerationTaskEntity generationTaskEntity = new GenerationTaskEntity();
@@ -64,7 +77,10 @@ public class GenerationServiceImpl implements GenerationService {
             generationTaskEntity.setStatus(GenerationStatus.CREATED);
             generationTaskEntity.setUser(userEntity);
 
+            userEntity.setQuota(userEntity.getQuota() - requestDto.getDatasetSize());
+            userRepository.persist(userEntity);
             generationTaskRepository.persist(generationTaskEntity);
+
             return generationTaskEntity.getId();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -87,6 +103,12 @@ public class GenerationServiceImpl implements GenerationService {
         GenerationParameters generationParameters = generationParametersMapper.from(requestDto);
 
         UserEntity userEntity = userRepository.findByName(username);
+        if (userEntity.isBlocked()) {
+            throw new InputValidationException("Your account was blocked and you can not submit new generation requests. Contact the administrator to unblock your account. ");
+        }
+        if (userEntity.getQuota() - requestDto.getDatasetSize() < 0) {
+            throw new InputValidationException("Generation quota reached. Contact administrator to increase it or lower requested dataset size. You current quota is: " + userEntity.getQuota());
+        }
 
         try {
             GenerationTaskEntity generationTaskEntity = new GenerationTaskEntity();
@@ -96,7 +118,10 @@ public class GenerationServiceImpl implements GenerationService {
             generationTaskEntity.setStatus(GenerationStatus.CREATED);
             generationTaskEntity.setUser(userEntity);
 
+            userEntity.setQuota(userEntity.getQuota() - requestDto.getDatasetSize());
+            userRepository.persist(userEntity);
             generationTaskRepository.persist(generationTaskEntity);
+
             return generationTaskEntity.getId();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -125,6 +150,26 @@ public class GenerationServiceImpl implements GenerationService {
                                 .status(task.getStatus())
                                 .build()
                 ).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void deleteTaskResult(DeleteTaskResultRequestDto requestDto, String username) {
+        UserEntity user = userRepository.findByName(username);
+        GenerationTaskEntity generationTask = generationTaskRepository.findById(requestDto.getGenerationTaskId());
+
+        if (generationTask == null) {
+            throw new InputValidationException("Task not found.");
+        }
+
+        if (!Objects.equals(generationTask.getUser().getId(), user.getId())) {
+            if (!UserRolesConstants.ADMIN.equals(user.getRole())) {
+                throw new InputValidationException("Task not found.");
+            }
+        }
+
+        filesService.deleteDataset(user, generationTask);
+        generationTask.setStatus(GenerationStatus.RESULT_DELETED);
     }
 
     private void validateParametersInput(GenerationTaskParameters1DRequestDto requestDto) throws InputValidationException {

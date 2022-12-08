@@ -21,6 +21,7 @@ import ru.ifmo.se.database.repository.GenerationTaskRepository;
 import ru.ifmo.se.service.api.DatasetGeneratorService;
 import ru.ifmo.se.service.api.storage.TempImageStorageService;
 import ru.ifmo.se.service.model.GenerationParameters;
+import ru.ifmo.se.utils.FileUtils;
 import ru.ifmo.se.utils.MathUtils;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -60,6 +61,9 @@ public class DatasetGeneratorServiceImpl implements DatasetGeneratorService {
 
     @Inject
     DiskShareWrapper diskShareWrapper;
+
+    @Inject
+    FileUtils fileUtils;
 
     @Scheduled(cron = "{app.scheduled.dataset-generation-task-start}")
     public void processNextTask() {
@@ -129,7 +133,7 @@ public class DatasetGeneratorServiceImpl implements DatasetGeneratorService {
 
                 DiskShare diskShare = diskShareWrapper.getDiskShare();
                 File datasetZip = diskShare.openFile(
-                        userId.toString() + "/" + generationTaskUuid + ".zip",
+                        fileUtils.getDatasetFileName(userId, generationTaskUuid),
                         EnumSet.of(AccessMask.FILE_WRITE_DATA),
                         null,
                         SMB2ShareAccess.ALL,
@@ -138,6 +142,7 @@ public class DatasetGeneratorServiceImpl implements DatasetGeneratorService {
                 );
 
                 ZipOutputStream zipOut = new ZipOutputStream(datasetZip.getOutputStream());
+                zipOut.setLevel(9);
 
                 for (int i = 0; i < images.size(); i++) {
                     ZipEntry zipEntry = new ZipEntry(i + ".png");

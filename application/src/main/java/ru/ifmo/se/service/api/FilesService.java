@@ -1,8 +1,13 @@
 package ru.ifmo.se.service.api;
 
-import java.io.InputStream;
+import com.hierynomus.smbj.share.File;
+import ru.ifmo.se.database.model.GenerationTaskEntity;
+import ru.ifmo.se.database.model.UserEntity;
+
 import java.util.UUID;
 
 public interface FilesService {
-    InputStream getDatasetStream(String username, UUID taskUuid);
+    File getDatasetFile(String username, UUID taskUuid);
+
+    void deleteDataset(UserEntity user, GenerationTaskEntity generationTask);
 }

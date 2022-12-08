@@ -13,6 +13,7 @@ import ru.ifmo.se.database.repository.GenerationTaskRepository;
 import ru.ifmo.se.database.repository.UserRepository;
 import ru.ifmo.se.exception.InputValidationException;
 import ru.ifmo.se.service.api.FilesService;
+import ru.ifmo.se.utils.FileUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -34,8 +35,11 @@ public class FilesServiceImpl implements FilesService {
     @Inject
     DiskShareWrapper diskShareWrapper;
 
+    @Inject
+    FileUtils fileUtils;
+
     @Override
-    public InputStream getDatasetStream(String username, UUID taskUuid) {
+    public File getDatasetFile(String username, UUID taskUuid) {
         UserEntity user = userRepository.findByName(username);
         GenerationTaskEntity generationTask = generationTaskRepository.findById(taskUuid);
 
@@ -47,21 +51,30 @@ public class FilesServiceImpl implements FilesService {
             throw new InputValidationException("Error occurred while generating dataset. No dataset file can be downloaded. ");
         }
 
+        if (GenerationStatus.RESULT_DELETED.equals(generationTask.getStatus())) {
+            throw new InputValidationException("Dataset deleted and can not be downloaded. ");
+        }
+
         if (!GenerationStatus.COMPLETED.equals(generationTask.getStatus())) {
             throw new InputValidationException("Generation is still in progress. ");
         }
 
         DiskShare diskShare = diskShareWrapper.getDiskShare();
 
-        File datasetZip = diskShare.openFile(
-                user.getId().toString() + "/" + generationTask.getId().toString() + ".zip",
+        return diskShare.openFile(
+                fileUtils.getDatasetFileName(user.getId(), generationTask.getId()),
                 EnumSet.of(AccessMask.FILE_READ_DATA),
                 null,
                 SMB2ShareAccess.ALL,
                 SMB2CreateDisposition.FILE_OPEN,
                 null
         );
-
-        return datasetZip.getInputStream();
     }
+
+    @Override
+    public void deleteDataset(UserEntity user, GenerationTaskEntity generationTask) {
+        DiskShare diskShare = diskShareWrapper.getDiskShare();
+        diskShare.rm(fileUtils.getDatasetFileName(user.getId(), generationTask.getId()));
+    }
+
 }

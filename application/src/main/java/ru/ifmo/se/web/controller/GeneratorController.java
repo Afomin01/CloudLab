@@ -6,6 +6,7 @@ import ru.ifmo.se.web.model.CreatedGenerationTaskResponseDto;
 import ru.ifmo.se.web.model.GenerationTaskParameters1DRequestDto;
 import ru.ifmo.se.web.model.GenerationTaskParameters2DRequestDto;
 import ru.ifmo.se.web.model.GenerationTaskResponseDto;
+import ru.ifmo.se.web.model.admin.DeleteTaskResultRequestDto;
 
 import javax.annotation.security.RolesAllowed;
 import javax.imageio.ImageIO;
@@ -73,7 +74,7 @@ public class GeneratorController {
     @Path("/2D/generate")
     @RolesAllowed(UserRolesConstants.USER)
     public Response generateDataset2D(GenerationTaskParameters2DRequestDto requestDto) throws IOException {
-        UUID taskId =  generationService.createGenerationTask2D(requestDto, securityContext.getUserPrincipal().getName());
+        UUID taskId = generationService.createGenerationTask2D(requestDto, securityContext.getUserPrincipal().getName());
 
         return Response
                 .ok(CreatedGenerationTaskResponseDto.builder().taskId(taskId).build())
@@ -85,5 +86,12 @@ public class GeneratorController {
     @RolesAllowed(UserRolesConstants.USER)
     public List<GenerationTaskResponseDto> getUserGenerationTasks() {
         return generationService.getUserGenerationTasks(securityContext.getUserPrincipal().getName());
+    }
+
+    @Path("/delete-task-result")
+    @POST
+    @RolesAllowed(UserRolesConstants.USER)
+    public void deleteTaskResult(DeleteTaskResultRequestDto requestDto) {
+        generationService.deleteTaskResult(requestDto, securityContext.getUserPrincipal().getName());
     }
 }

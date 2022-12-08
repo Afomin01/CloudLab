@@ -2,7 +2,6 @@ package ru.ifmo.se.web.mapper;
 
 import io.vertx.mutiny.core.http.HttpHeaders;
 import lombok.extern.slf4j.Slf4j;
-import ru.ifmo.se.exception.InputValidationException;
 import ru.ifmo.se.web.model.ErrorDto;
 
 import javax.ws.rs.core.MediaType;
@@ -13,21 +12,21 @@ import java.time.Instant;
 
 @Provider
 @Slf4j
-public class InputValidationExceptionMapper implements ExceptionMapper<InputValidationException> {
+public class ThrowableMapper implements ExceptionMapper<Throwable> {
     @Override
-    public Response toResponse(InputValidationException e) {
-        //log.error(e.getMessage(), e);
-        var status = Response.Status.BAD_REQUEST;
+    public Response toResponse(Throwable exception) {
+        log.error(exception.getMessage(), exception);
+        var status = Response.Status.INTERNAL_SERVER_ERROR;
 
         return Response
                 .status(status)
                 .entity(
                         ErrorDto
-                        .builder()
+                                .builder()
                                 .timestamp(Instant.now())
                                 .code(status.getStatusCode())
-                                .message(e.getMessage())
-                        .build()
+                                .message("Unexpected server error.")
+                                .build()
                 )
                 .header(HttpHeaders.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON)
                 .build();

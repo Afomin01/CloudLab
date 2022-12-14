@@ -17,4 +17,20 @@ public class UserRepository implements PanacheRepositoryBase<UserEntity, UUID> {
             return null;
         } else return userEntities.get(0);
     }
+
+    public UserEntity findByTelegramId(String telegramId) {
+        List<UserEntity> userEntities = list("telegramId", telegramId);
+
+        if (CollectionUtils.isEmpty(userEntities)) {
+            return null;
+        } else return userEntities.get(0);
+    }
+
+    public UserEntity findByBotToken(String botToken) {
+        List<UserEntity> userEntities = list("botToken", botToken);
+
+        if (CollectionUtils.isEmpty(userEntities)) {
+            return null;
+        } else return userEntities.get(0);
+    }
 }

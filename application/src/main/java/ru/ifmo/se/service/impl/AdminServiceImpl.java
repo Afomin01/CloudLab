@@ -38,6 +38,7 @@ public class AdminServiceImpl implements AdminService {
         userEntity.setPassword(requestDto.getPassword());
         userEntity.setRole(UserRolesConstants.USER);
         userEntity.setQuota(requestDto.getQuota() == null ? applicationProperties.user().defaultQuota() : requestDto.getQuota());
+        userEntity.setBotToken(UUID.randomUUID().toString());
 
         userRepository.persistAndFlush(userEntity);
 

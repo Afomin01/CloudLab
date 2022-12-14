@@ -1,11 +1,12 @@
 package ru.ifmo.se.web.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.bot.connector.authentication.AuthenticationException;
 import com.microsoft.bot.integration.BotFrameworkHttpAdapter;
 import com.microsoft.bot.schema.Activity;
 import lombok.extern.slf4j.Slf4j;
 import ru.ifmo.se.configuration.BotConfiguration;
-import ru.ifmo.se.utils.EchoBot;
+import ru.ifmo.se.service.impl.AzureBot;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -23,11 +24,10 @@ public class BotController {
     BotConfiguration configuration;
 
     @Inject
-    EchoBot bot;
+    AzureBot bot;
 
     @POST
     public Object listen(Activity activity, @DefaultValue("") @HeaderParam("Authorization") String authHeader) {
-        log.info(authHeader);
         BotFrameworkHttpAdapter adapter = configuration.getAdapter();
 
         return adapter.processIncomingActivity(authHeader, activity, this.bot).handle((result, exception) -> {

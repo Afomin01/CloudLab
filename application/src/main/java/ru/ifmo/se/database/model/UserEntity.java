@@ -41,6 +41,9 @@ public class UserEntity {
     @Column(name = "telegram_id")
     private String telegramId;
 
+    @Column(name = "bot_token")
+    private String botToken;
+
     private boolean blocked;
     private long quota;
 
